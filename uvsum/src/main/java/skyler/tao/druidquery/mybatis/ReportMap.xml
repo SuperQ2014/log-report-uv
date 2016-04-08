@@ -6,9 +6,9 @@
 <mapper namespace="UveReport">
 	<insert id="replace" parameterType="ReportTarget">
 		REPLACE INTO
-		uve_uvsum_report
-		(`date`,`platform`,`pr`,`is_unread_pool`,`version`,`loadmore`,`service_name`,`uv`)
+		main_feed_uv_reports
+		(`date`,`platform`,`pr`,`uv`,`imp_uv`)
 		VALUES
-		(#{date},#{platform},#{pr},#{is_unread_pool},#{version},#{loadmore},#{service_name},#{uv});
+		(#{date},#{platform},#{product},#{uv},#{imp_uv});
 	</insert>
 </mapper>

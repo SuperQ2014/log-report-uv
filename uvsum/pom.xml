@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>skyler.tao.druidquery</groupId>
-  <artifactId>uvsum</artifactId>
+  <artifactId>main_feed_uv</artifactId>
   <version>0.0.1</version>
   <packaging>jar</packaging>
 
@@ -55,7 +55,7 @@
 	<build>
 		<resources>
 			<resource>
-				<directory>src/main/java/io/uve/mybatis</directory>
+				<directory>src/main/java/skyler/tao/druidquery/mybatis</directory>
 			</resource>
 			<resource>
                 <directory>src/main/resources</directory>

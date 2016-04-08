@@ -5,7 +5,7 @@
  
 <configuration>
     <typeAliases>
-        <typeAlias alias="ReportTarget" type="io.uve.mybatis.ReportTarget"/>        
+        <typeAlias alias="ReportTarget" type="skyler.tao.druidquery.mybatis.ReportTarget"/>        
     </typeAliases>
  
     <environments default="development">
