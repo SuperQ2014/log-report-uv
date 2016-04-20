@@ -73,7 +73,6 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 					}
 				}
 				
-				logger.info("Input data to mysql, the " + i + " times");
 				ReportTarget target = new ReportTarget();
 				target.setDate(date);
 				target.setPlatform(platform);

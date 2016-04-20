@@ -25,6 +25,8 @@ public enum PostRequest {
 			logger.info("url or body is empty!");
 			return null;
 		}
+		logger.info("post url: " + url);
+		logger.info("post body: " + body);
 		try (CloseableHttpClient httpClient = HttpClientBuilder.create()
 				.build()) {
 			HttpPost request = new HttpPost(url);
@@ -32,7 +34,7 @@ public enum PostRequest {
 			request.addHeader("content-type", "application/json");
 			request.setEntity(params);
 			RequestConfig paramsOther = RequestConfig.custom()
-					.setConnectTimeout(30000).setSocketTimeout(30000).build();
+					.setConnectTimeout(90000).setSocketTimeout(90000).build();
 			request.setConfig(paramsOther);
 			HttpResponse response = httpClient.execute(request);
 			String responseString = EntityUtils.toString(response.getEntity(),
