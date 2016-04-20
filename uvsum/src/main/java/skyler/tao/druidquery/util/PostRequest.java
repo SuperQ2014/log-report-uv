@@ -34,7 +34,7 @@ public enum PostRequest {
 			request.addHeader("content-type", "application/json");
 			request.setEntity(params);
 			RequestConfig paramsOther = RequestConfig.custom()
-					.setConnectTimeout(90000).setSocketTimeout(90000).build();
+					.setConnectTimeout(990000).setSocketTimeout(990000).build();
 			request.setConfig(paramsOther);
 			HttpResponse response = httpClient.execute(request);
 			String responseString = EntityUtils.toString(response.getEntity(),
