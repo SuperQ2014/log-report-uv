@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>skyler.tao.druidquery</groupId>
-  <artifactId>main_feed_uv</artifactId>
+  <artifactId>uve_uv</artifactId>
   <version>0.0.1</version>
   <packaging>jar</packaging>
 
-  <name>uvsum</name>
+  <name>uve-uv-reports</name>
   <url>http://maven.apache.org</url>
 
   <properties>

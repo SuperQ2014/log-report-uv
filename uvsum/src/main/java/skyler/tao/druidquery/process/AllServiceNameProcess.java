@@ -10,18 +10,17 @@ import skyler.tao.druidquery.mybatis.MyBatisConnectionFactory;
 import skyler.tao.druidquery.mybatis.ReportTarget;
 import skyler.tao.druidquery.mybatis.ReportTargetDAO;
 
-public class AllProductProcess extends ProcessAbstract implements Runnable {
-	private Logger logger = Logger.getLogger(AllProductProcess.class);
+public class AllServiceNameProcess extends ProcessAbstract implements Runnable {
+	private Logger logger = Logger.getLogger(AllServiceNameProcess.class);
 	private ReportTargetDAO uvReportDAO = new ReportTargetDAO(MyBatisConnectionFactory.getSqlSessionFactory());
 
 	@Override
 	public void run() {
 
-		String body = "{\"queryType\":\"groupBy\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"dimensions\":[\"platform\"],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},\"aggregations\":[{\"type\":\"hyperUnique\",\"name\":\"imp_uv\",\"fieldName\":\"uv\"}],\"intervals\":[\"" + dateGenerate.getStartDate() + "T16:00:00/" + dateGenerate.getEndDate() + "T16:00:00\"]}";
+		String body = "{\"queryType\":\"groupBy\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"dimensions\":[\"platform\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"name\":\"imp_uv\",\"fieldName\":\"uv\"}],\"intervals\":[\"" + dateGenerate.getStartDate() + "T16:00:00/" + dateGenerate.getEndDate() + "T16:00:00\"]}";
 		JsonElement responseJsonAll = postRequest.http(url_uve, body);
-		if (responseJsonAll == null) {
-			logger.info("RETURN: Query all product data failed!");
-			return;
+		while (responseJsonAll == null) {
+			responseJsonAll = postRequest.http(url_uve, body);
 		}
 
 		if (responseJsonAll.isJsonArray()) {
@@ -30,8 +29,9 @@ public class AllProductProcess extends ProcessAbstract implements Runnable {
 			logger.info("Response data length: " + length);
 
 			String date = dateGenerate.getDate();
+			String service_name = "all";
 			String platform = "_";
-			String product = "all";
+			String product = "_";
 			int uv = 0;
 			int imp_uv = 0;
 
@@ -57,7 +57,7 @@ public class AllProductProcess extends ProcessAbstract implements Runnable {
 						imp_uv = 0;
 					}
 
-					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"and\",\"fields\":[{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},{\"type\":\"selector\",\"dimension\":\"platform\",\"value\":\""+platform+"\"}]}}";
+					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"selector\",\"dimension\":\"platform\",\"value\":\""+platform+"\"}}";
 					JsonElement uv_responseJson = postRequest.http(url_info, uv_body);
 					if (uv_responseJson == null) {
 						logger.info("CONTINUE: Query uv failed! The " + i + " times.");
@@ -75,6 +75,7 @@ public class AllProductProcess extends ProcessAbstract implements Runnable {
 				
 				ReportTarget target = new ReportTarget();
 				target.setDate(date);
+				target.setService_name(service_name);
 				target.setPlatform(platform);
 				target.setProduct(product);
 				target.setUv(uv);

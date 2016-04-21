@@ -3,6 +3,7 @@ package skyler.tao.druidquery.mybatis;
 public class ReportTarget {
 	
 	private String date;
+	private String service_name;
 	private String platform;
 	private String product;
 	
@@ -37,5 +38,11 @@ public class ReportTarget {
 	}
 	public void setImp_uv(int imp_uv) {
 		this.imp_uv = imp_uv;
+	}
+	public String getService_name() {
+		return service_name;
+	}
+	public void setService_name(String service_name) {
+		this.service_name = service_name;
 	}
 }

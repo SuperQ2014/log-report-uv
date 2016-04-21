@@ -16,11 +16,10 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 	private ReportTargetDAO uvReportDAO = new ReportTargetDAO(MyBatisConnectionFactory.getSqlSessionFactory());
 	@Override
 	public void run() {
-		String body = "{\"queryType\":\"groupBy\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"dimensions\":[\"product\"],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},\"aggregations\":[{\"type\":\"hyperUnique\",\"name\":\"imp_uv\",\"fieldName\":\"uv\"}],\"intervals\":[\"" + dateGenerate.getStartDate() + "T16:00:00/" + dateGenerate.getEndDate() + "T16:00:00\"]}";
+		String body = "{\"queryType\":\"groupBy\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"dimensions\":[\"service_name\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"name\":\"imp_uv\",\"fieldName\":\"uv\"}],\"intervals\":[\"" + dateGenerate.getStartDate() + "T16:00:00/" + dateGenerate.getEndDate() + "T16:00:00\"]}";
 		JsonElement responseJsonAll = postRequest.http(url_uve, body);
-		if (responseJsonAll == null) {
-			logger.info("RETURN:Query all platform data failed!");
-			return;
+		while (responseJsonAll == null) {
+			responseJsonAll = postRequest.http(url_uve, body);
 		}
 
 		if (responseJsonAll.isJsonArray()) {
@@ -29,6 +28,7 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 			logger.info("Response data length: " + length);
 
 			String date = dateGenerate.getDate();
+			String service_name = "_";
 			String platform = "all";
 			String product = "_";
 			int uv = 0;
@@ -39,13 +39,13 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 				if (event != null) {
 					
 					try {
-						JsonElement prJson = event.get("product");
-						if (!prJson.isJsonNull()) {
-							product = prJson.getAsString();
+						JsonElement serviceNameJson = event.get("service_name");
+						if (!serviceNameJson.isJsonNull()) {
+							service_name = serviceNameJson.getAsString();
 						}
 					} catch (Exception e) {
-						logger.info("Pr cannot be parsed, use default!");
-						product = "_";
+						logger.info("Service_name cannot be parsed, use default!");
+						service_name = "_";
 					}
 					try {
 						JsonElement imp_uvJson = event.get("imp_uv");
@@ -57,11 +57,10 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 						imp_uv = 0;
 					}
 
-					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"and\",\"fields\":[{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},{\"type\":\"regex\",\"dimension\":\"product_r\",\"pattern\":\""+product+"\"}]}}";
+					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"" + service_name + "\"}}";
 					JsonElement uv_responseJson = postRequest.http(url_info, uv_body);
-					if (uv_responseJson == null) {
-						logger.info("CONTINUE: Query uv failed! For " + i);
-						continue;
+					while (uv_responseJson == null) {
+						uv_responseJson = postRequest.http(url_info, uv_body);
 					}
 					if (uv_responseJson.isJsonArray()) {
 						JsonArray uv_responseJsonArray = uv_responseJson.getAsJsonArray();
@@ -75,6 +74,7 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 				
 				ReportTarget target = new ReportTarget();
 				target.setDate(date);
+				target.setService_name(service_name);
 				target.setPlatform(platform);
 				target.setProduct(product);
 				target.setUv(uv);
@@ -83,5 +83,4 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 			}
 		}
 	}
-
 }
