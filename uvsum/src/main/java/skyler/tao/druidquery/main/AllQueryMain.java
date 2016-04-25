@@ -23,11 +23,11 @@ import skyler.tao.druidquery.process.AllServiceNameProcess;
 import skyler.tao.druidquery.process.GroupByProcess;
 import skyler.tao.druidquery.util.DateGenerator;
 
-public class QueryMain {
+public class AllQueryMain {
 
 	private static final int NTHREADS = 4;
 	private static final ExecutorService exec = Executors.newFixedThreadPool(NTHREADS);
-	private static Logger logger = Logger.getLogger(QueryMain.class);
+	private static Logger logger = Logger.getLogger(AllQueryMain.class);
 	protected static DateGenerator dateGenerate = Enum.valueOf(
 			DateGenerator.class, "REQUIREDDATE");
 	private static ReportTargetDAO uvReportDAO = new ReportTargetDAO(MyBatisConnectionFactory.getSqlSessionFactory());

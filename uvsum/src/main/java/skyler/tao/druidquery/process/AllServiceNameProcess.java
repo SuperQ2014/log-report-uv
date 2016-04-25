@@ -31,7 +31,7 @@ public class AllServiceNameProcess extends ProcessAbstract implements Runnable {
 			String date = dateGenerate.getDate();
 			String service_name = "all";
 			String platform = "_";
-			String product = "_";
+			String product = "all";
 			int uv = 0;
 			int imp_uv = 0;
 

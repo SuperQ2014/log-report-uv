@@ -16,7 +16,7 @@ public class AllPlatformServiceNameProcess extends ProcessAbstract implements Ru
 		String date = dateGenerate.getDate();
 		String service_name = "all";
 		String platform = "all";
-		String product = "_";
+		String product = "all";
 		int uv = 0;
 		int imp_uv = 0;
 		
