@@ -19,9 +19,8 @@ public class AllProductProcess extends ProcessAbstract implements Runnable {
 
 		String body = "{\"queryType\":\"groupBy\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"dimensions\":[\"platform\"],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},\"aggregations\":[{\"type\":\"hyperUnique\",\"name\":\"imp_uv\",\"fieldName\":\"uv\"}],\"intervals\":[\"" + dateGenerate.getStartDate() + "T16:00:00/" + dateGenerate.getEndDate() + "T16:00:00\"]}";
 		JsonElement responseJsonAll = postRequest.http(url_uve, body);
-		if (responseJsonAll == null) {
-			logger.info("RETURN: Query all product data failed!");
-			return;
+		while (responseJsonAll == null) {
+			responseJsonAll = postRequest.http(url_uve, body);
 		}
 
 		if (responseJsonAll.isJsonArray()) {
@@ -59,8 +58,11 @@ public class AllProductProcess extends ProcessAbstract implements Runnable {
 
 					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"and\",\"fields\":[{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},{\"type\":\"selector\",\"dimension\":\"platform\",\"value\":\""+platform+"\"}]}}";
 					JsonElement uv_responseJson = postRequest.http(url_info, uv_body);
-					if (uv_responseJson == null) {
-						logger.info("CONTINUE: Query uv failed! The " + i + " times.");
+					int times = 0;
+					while (uv_responseJson == null && times < 5) {
+						uv_responseJson = postRequest.http(url_info, uv_body);
+					}
+					if (times >= 5) {
 						continue;
 					}
 					if (uv_responseJson.isJsonArray()) {

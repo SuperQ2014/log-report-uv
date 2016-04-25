@@ -1,7 +1,5 @@
 package skyler.tao.druidquery.process;
 
-import org.apache.log4j.Logger;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
@@ -11,7 +9,6 @@ import skyler.tao.druidquery.mybatis.ReportTargetDAO;
 
 public class AllPlatformProductProcess extends ProcessAbstract implements Runnable {
 
-	private Logger logger = Logger.getLogger(AllPlatformProductProcess.class);
 	private ReportTargetDAO uvReportDAO = new ReportTargetDAO(MyBatisConnectionFactory.getSqlSessionFactory());
 	@Override
 	public void run() {
@@ -24,9 +21,8 @@ public class AllPlatformProductProcess extends ProcessAbstract implements Runnab
 		
 		String impuv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv\",\"name\":\"imp_uv\"}]}";
 		JsonElement impuv_response = postRequest.http(url_uve, impuv_body);
-		if (impuv_response == null) {
-			logger.info("RETURN: Query imp_uv failed!");
-			return;
+		while (impuv_response == null) {
+			impuv_response = postRequest.http(url_uve, impuv_body);
 		}
 
 		if (impuv_response.isJsonArray()) {
@@ -40,9 +36,8 @@ public class AllPlatformProductProcess extends ProcessAbstract implements Runnab
 		
 		String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}]}";
 		JsonElement uv_response = postRequest.http(url_info, uv_body);
-		if (uv_response == null) {
-			logger.info("RETURN: Query uv failed!");
-			return;
+		while (uv_response == null) {
+			uv_response = postRequest.http(url_info, uv_body);
 		}
 
 		if (uv_response.isJsonArray()) {

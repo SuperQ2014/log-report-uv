@@ -18,9 +18,8 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 	public void run() {
 		String body = "{\"queryType\":\"groupBy\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"dimensions\":[\"product\"],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},\"aggregations\":[{\"type\":\"hyperUnique\",\"name\":\"imp_uv\",\"fieldName\":\"uv\"}],\"intervals\":[\"" + dateGenerate.getStartDate() + "T16:00:00/" + dateGenerate.getEndDate() + "T16:00:00\"]}";
 		JsonElement responseJsonAll = postRequest.http(url_uve, body);
-		if (responseJsonAll == null) {
-			logger.info("RETURN:Query all platform data failed!");
-			return;
+		while (responseJsonAll == null) {
+			responseJsonAll = postRequest.http(url_uve, body);
 		}
 
 		if (responseJsonAll.isJsonArray()) {
@@ -59,8 +58,12 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 
 					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"and\",\"fields\":[{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},{\"type\":\"regex\",\"dimension\":\"product_r\",\"pattern\":\""+product+"\"}]}}";
 					JsonElement uv_responseJson = postRequest.http(url_info, uv_body);
-					if (uv_responseJson == null) {
-						logger.info("CONTINUE: Query uv failed! For " + i);
+					int times = 0;		//一直查询直到有结果为止，查询次数不超过5次。
+					while (uv_responseJson == null && times < 5) {
+						uv_responseJson = postRequest.http(url_info, uv_body);
+						times++;
+					}
+					if (times >=5) {
 						continue;
 					}
 					if (uv_responseJson.isJsonArray()) {
