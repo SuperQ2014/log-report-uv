@@ -77,7 +77,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>skyler.tao.druidquery.main.QueryMain</mainClass>
+							<mainClass>skyler.tao.druidquery.main.MainFeedMain</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
