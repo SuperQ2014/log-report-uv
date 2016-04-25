@@ -1,5 +1,12 @@
 package skyler.tao.druidquery.process;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import org.apache.log4j.Logger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -13,6 +20,8 @@ public class GroupByProcess extends ProcessAbstract implements Runnable {
 
 	private Logger logger = Logger.getLogger(GroupByProcess.class);
 	private ReportTargetDAO uvReportDAO = new ReportTargetDAO(MyBatisConnectionFactory.getSqlSessionFactory());
+	private static final int NTHREADS = 4;
+	private static final ExecutorService exec = Executors.newFixedThreadPool(NTHREADS);
 
 	@Override
 	public void run() {
@@ -27,16 +36,44 @@ public class GroupByProcess extends ProcessAbstract implements Runnable {
 			JsonArray responseJsonArray = responseJsonAll.getAsJsonArray();
 			int length = responseJsonArray.size();
 			logger.info("Response data length: " + length);
+			Collection<Future<?>> futures = new LinkedList<Future<?>>();
+			
+			int increment = length / 4;
+			for(int i = 0; i < 4; i++) {
+				futures.add(exec.submit(new Worker(i * increment, (i + 1) * increment, responseJsonArray)));
+			}
+			for (Future<?> future:futures) {
+			    try {
+					future.get();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+				}
+			}
+			exec.shutdown();
+		}
+	}
+	private class Worker implements Runnable {
+	    final private int minIndex; // first index, inclusive
+	    final private int maxIndex; // last index, exclusive
+	    private JsonArray data;
+	    private String date = dateGenerate.getDate();
+	    private String service_name = "_";
+	    private String platform = "_";
+	    private String product = "_";
+	    private int uv = 0;
+	    private int imp_uv = 0;
 
-			String date = dateGenerate.getDate();
-			String service_name = "_";
-			String platform = "_";
-			String product = "_";
-			int uv = 0;
-			int imp_uv = 0;
+	    public Worker(int minIndex, int maxIndex, JsonArray data) {
+	        this.minIndex = minIndex;
+	        this.maxIndex = maxIndex;
+	        this.data = data;
+	    }
 
-			for (int i = 0; i < length; i++) {
-				JsonObject event = (JsonObject) responseJsonArray.get(i).getAsJsonObject().get("event");
+	    public void run() {
+	    	for (int i = minIndex; i < maxIndex; i++) {
+				JsonObject event = (JsonObject) data.get(i).getAsJsonObject().get("event");
 				if (event != null) {
 					try {
 						JsonElement serviceNameJson = event.get("service_name");
@@ -100,6 +137,6 @@ public class GroupByProcess extends ProcessAbstract implements Runnable {
 				
 				uvReportDAO.replace(target);
 			}
-		}
+	    }
 	}
 }
