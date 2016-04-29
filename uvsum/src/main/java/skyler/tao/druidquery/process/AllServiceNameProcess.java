@@ -20,6 +20,7 @@ public class AllServiceNameProcess extends ProcessAbstract implements Runnable {
 		String body = "{\"queryType\":\"groupBy\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"dimensions\":[\"platform\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"name\":\"imp_uv\",\"fieldName\":\"uv\"}],\"intervals\":[\"" + dateGenerate.getStartDate() + "T16:00:00/" + dateGenerate.getEndDate() + "T16:00:00\"]}";
 		JsonElement responseJsonAll = postRequest.http(url_uve, body);
 		while (responseJsonAll == null) {
+			logger.warn("Retry as response empty: " + body);
 			responseJsonAll = postRequest.http(url_uve, body);
 		}
 
@@ -44,8 +45,8 @@ public class AllServiceNameProcess extends ProcessAbstract implements Runnable {
 							platform = platformJson.getAsString();
 						}
 					} catch (Exception e) {
-						logger.info("Platform cannot be parsed, use default!");
-						platform = "_";
+						logger.error("Platform cannot be parsed, return!");
+						return;
 					}
 					try {
 						JsonElement imp_uvJson = event.get("imp_uv");
@@ -53,14 +54,14 @@ public class AllServiceNameProcess extends ProcessAbstract implements Runnable {
 							imp_uv = imp_uvJson.getAsInt();
 						}
 					} catch (Exception e) {
-						logger.info("Imp_uv cannot be parsed, use default!");
-						imp_uv = 0;
+						logger.error("Imp_uv cannot be parsed, return!");
+						return;
 					}
 
 					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"selector\",\"dimension\":\"platform\",\"value\":\""+platform+"\"}}";
 					JsonElement uv_responseJson = postRequest.http(url_info, uv_body);
 					if (uv_responseJson == null) {
-						logger.info("CONTINUE: Query uv failed! The " + i + " times.");
+						logger.info("CONTINUE--Query uv failed! Body: " + uv_body);
 						continue;
 					}
 					if (uv_responseJson.isJsonArray()) {
@@ -68,7 +69,8 @@ public class AllServiceNameProcess extends ProcessAbstract implements Runnable {
 						try {
 							uv = uv_responseJsonArray.get(0).getAsJsonObject().get("result").getAsJsonObject().get("uv").getAsInt();
 						} catch (Exception e) {
-							uv = 0;
+							logger.error("Uv cannot be parsed, return!");
+							return;
 						}
 					}
 				}

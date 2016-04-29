@@ -1,5 +1,7 @@
 package skyler.tao.druidquery.process;
 
+import org.apache.log4j.Logger;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
@@ -10,6 +12,7 @@ import skyler.tao.druidquery.mybatis.ReportTargetDAO;
 public class AllPlatformServiceNameProcess extends ProcessAbstract implements Runnable {
 
 	private ReportTargetDAO uvReportDAO = new ReportTargetDAO(MyBatisConnectionFactory.getSqlSessionFactory());
+	private Logger logger = Logger.getLogger(AllPlatformServiceNameProcess.class);
 	@Override
 	public void run() {
 
@@ -23,6 +26,7 @@ public class AllPlatformServiceNameProcess extends ProcessAbstract implements Ru
 		String impuv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv\",\"name\":\"imp_uv\"}]}";
 		JsonElement impuv_response = postRequest.http(url_uve, impuv_body);
 		while (impuv_response == null) {
+			logger.warn("imp_uv response empty: " + impuv_body);
 			impuv_response = postRequest.http(url_uve, impuv_body);
 		}
 
@@ -31,13 +35,15 @@ public class AllPlatformServiceNameProcess extends ProcessAbstract implements Ru
 			try {
 				imp_uv = impuv_response_array.get(0).getAsJsonObject().get("result").getAsJsonObject().get("imp_uv").getAsInt();
 			} catch (Exception e) {
-				imp_uv = 0;
+				logger.error("imp_uv cannot be parsed, return!");
+				return;
 			}
 		}
 		
 		String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}]}";
 		JsonElement uv_response = postRequest.http(url_info, uv_body);
 		while (uv_response == null) {
+			logger.warn("uv response empty: " + uv_body);
 			uv_response = postRequest.http(url_info, uv_body);
 		}
 
@@ -46,7 +52,8 @@ public class AllPlatformServiceNameProcess extends ProcessAbstract implements Ru
 			try {
 				uv = uv_response_array.get(0).getAsJsonObject().get("result").getAsJsonObject().get("uv").getAsInt();
 			} catch (Exception e) {
-				uv = 0;
+				logger.error("uv cannot be parsed, return!");
+				return;
 			}
 		}
 		

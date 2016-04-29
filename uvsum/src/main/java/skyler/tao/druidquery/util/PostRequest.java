@@ -25,8 +25,6 @@ public enum PostRequest {
 			logger.info("url or body is empty!");
 			return null;
 		}
-		logger.info("post url: " + url);
-		logger.info("post body: " + body);
 		try (CloseableHttpClient httpClient = HttpClientBuilder.create()
 				.build()) {
 			HttpPost request = new HttpPost(url);
