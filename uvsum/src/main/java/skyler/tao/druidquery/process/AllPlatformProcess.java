@@ -46,7 +46,7 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 						}
 					} catch (Exception e) {
 						logger.error("Service_name cannot be parsed, return!");
-						return;
+						continue;
 					}
 					try {
 						JsonElement imp_uvJson = event.get("imp_uv");
@@ -55,7 +55,7 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 						}
 					} catch (Exception e) {
 						logger.error("Imp_uv cannot be parsed, return!");
-						return;
+						continue;
 					}
 
 					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"" + service_name + "\"}}";
@@ -70,7 +70,7 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 							uv = uv_responseJsonArray.get(0).getAsJsonObject().get("result").getAsJsonObject().get("uv").getAsInt();
 						} catch (Exception e) {
 							logger.error("Uv cannot be parsed, return!");
-							return;
+							continue;
 						}
 					}
 				}
