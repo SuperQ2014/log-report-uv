@@ -19,6 +19,7 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 		String body = "{\"queryType\":\"groupBy\",\"dataSource\":\"bo_adid\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"dimensions\":[\"product\"],\"filter\":{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},\"aggregations\":[{\"type\":\"hyperUnique\",\"name\":\"imp_uv\",\"fieldName\":\"uv\"}],\"intervals\":[\"" + dateGenerate.getStartDate() + "T16:00:00/" + dateGenerate.getEndDate() + "T16:00:00\"]}";
 		JsonElement responseJsonAll = postRequest.http(url_uve, body);
 		while (responseJsonAll == null) {
+			logger.warn("Response empty: " + body);
 			responseJsonAll = postRequest.http(url_uve, body);
 		}
 
@@ -43,8 +44,8 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 							product = prJson.getAsString();
 						}
 					} catch (Exception e) {
-						logger.info("Pr cannot be parsed, use default!");
-						product = "_";
+						logger.error("Pr cannot be parsed, return!");
+						continue;
 					}
 					try {
 						JsonElement imp_uvJson = event.get("imp_uv");
@@ -52,14 +53,15 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 							imp_uv = imp_uvJson.getAsInt();
 						}
 					} catch (Exception e) {
-						logger.info("Imp_uv cannot be parsed, use default!");
-						imp_uv = 0;
+						logger.error("Imp_uv cannot be parsed, return!");
+						continue;
 					}
 
 					String uv_body = "{\"queryType\":\"timeseries\",\"dataSource\":\"uve_stat_report\",\"granularity\":{\"type\":\"period\",\"period\":\"P1D\",\"timeZone\":\"Asia/Shanghai\"},\"intervals\":[\""+dateGenerate.getStartDate()+"T16:00:00/"+dateGenerate.getEndDate()+"T16:00:00\"],\"aggregations\":[{\"type\":\"hyperUnique\",\"fieldName\":\"uv1\",\"name\":\"uv\"}],\"filter\":{\"type\":\"and\",\"fields\":[{\"type\":\"selector\",\"dimension\":\"service_name\",\"value\":\"main_feed\"},{\"type\":\"regex\",\"dimension\":\"product_r\",\"pattern\":\""+product+"\"}]}}";
 					JsonElement uv_responseJson = postRequest.http(url_info, uv_body);
 					int times = 0;		//一直查询直到有结果为止，查询次数不超过5次。
 					while (uv_responseJson == null && times < 5) {
+						logger.warn("Response empty: " + body);
 						uv_responseJson = postRequest.http(url_info, uv_body);
 						times++;
 					}
@@ -71,7 +73,8 @@ public class AllPlatformProcess extends ProcessAbstract implements Runnable {
 						try {
 							uv = uv_responseJsonArray.get(0).getAsJsonObject().get("result").getAsJsonObject().get("uv").getAsInt();
 						} catch (Exception e) {
-							uv = 0;
+							logger.error("Uv cannot be parsed, return!");
+							continue;
 						}
 					}
 				}
